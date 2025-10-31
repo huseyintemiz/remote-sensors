@@ -9,12 +9,20 @@ const chartConfig = {
     cpu: {
         borderColor: 'rgb(102, 126, 234)',
         backgroundColor: 'rgba(102, 126, 234, 0.1)',
-        label: 'CPU Temperature (°C)'
+        label: 'CPU Temperature (°C)',
+        yAxisID: 'y'
     },
     gpu: {
         borderColor: 'rgb(240, 147, 251)',
         backgroundColor: 'rgba(240, 147, 251, 0.1)',
-        label: 'GPU Temperature (°C)'
+        label: 'GPU Temperature (°C)',
+        yAxisID: 'y'
+    },
+    memory: {
+        borderColor: 'rgb(79, 172, 254)',
+        backgroundColor: 'rgba(79, 172, 254, 0.1)',
+        label: 'Memory Usage (%)',
+        yAxisID: 'y1'
     }
 };
 
@@ -59,7 +67,8 @@ async function initializeChart(hostname) {
                     tension: 0.4,
                     pointRadius: 3,
                     pointHoverRadius: 5,
-                    fill: true
+                    fill: true,
+                    yAxisID: 'y'
                 },
                 {
                     label: chartConfig.gpu.label,
@@ -70,7 +79,20 @@ async function initializeChart(hostname) {
                     tension: 0.4,
                     pointRadius: 3,
                     pointHoverRadius: 5,
-                    fill: true
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: chartConfig.memory.label,
+                    data: chartData.memoryData,
+                    borderColor: chartConfig.memory.borderColor,
+                    backgroundColor: chartConfig.memory.backgroundColor,
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    fill: true,
+                    yAxisID: 'y1'
                 }
             ]
         },
@@ -96,7 +118,12 @@ async function initializeChart(hostname) {
                                 label += ': ';
                             }
                             if (context.parsed.y !== null) {
-                                label += context.parsed.y.toFixed(1) + '°C';
+                                // Add appropriate unit based on dataset
+                                if (label.includes('Memory')) {
+                                    label += context.parsed.y.toFixed(1) + '%';
+                                } else {
+                                    label += context.parsed.y.toFixed(1) + '°C';
+                                }
                             } else {
                                 label += 'N/A';
                             }
@@ -119,7 +146,9 @@ async function initializeChart(hostname) {
                     }
                 },
                 y: {
+                    type: 'linear',
                     display: true,
+                    position: 'left',
                     title: {
                         display: true,
                         text: 'Temperature (°C)'
@@ -127,6 +156,20 @@ async function initializeChart(hostname) {
                     beginAtZero: false,
                     suggestedMin: 20,
                     suggestedMax: 100
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Memory (%)'
+                    },
+                    min: 0,
+                    max: 100,
+                    grid: {
+                        drawOnChartArea: false
+                    }
                 }
             }
         }
@@ -140,6 +183,7 @@ function prepareChartData(readings) {
     const labels = [];
     const cpuData = [];
     const gpuData = [];
+    const memoryData = [];
 
     readings.forEach(reading => {
         // Format timestamp as HH:MM:SS
@@ -154,9 +198,13 @@ function prepareChartData(readings) {
         labels.push(timeStr);
         cpuData.push(reading.cpu_temp);
         gpuData.push(reading.gpu_temp);
+
+        // Extract memory percentage if available
+        const memPercent = reading.memory_usage?.percent || null;
+        memoryData.push(memPercent);
     });
 
-    return { labels, cpuData, gpuData };
+    return { labels, cpuData, gpuData, memoryData };
 }
 
 /**
@@ -217,6 +265,7 @@ async function updateChart(hostname) {
     chart.data.labels = chartData.labels;
     chart.data.datasets[0].data = chartData.cpuData;
     chart.data.datasets[1].data = chartData.gpuData;
+    chart.data.datasets[2].data = chartData.memoryData;
     chart.update('none'); // Update without animation for smoother refresh
 }
 

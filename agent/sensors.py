@@ -1,4 +1,4 @@
-"""Sensor reading functions for CPU and GPU temperatures."""
+"""Sensor reading functions for CPU/GPU temperatures and memory usage."""
 
 import psutil
 
@@ -60,4 +60,28 @@ def get_gpu_temp():
         temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
         return float(temp)
     except (NVMLError, Exception):
+        return None
+
+
+def get_memory_usage():
+    """
+    Read system memory usage statistics.
+
+    Returns:
+        dict: Memory usage information with keys:
+            - total: Total physical memory in GB
+            - used: Used memory in GB
+            - available: Available memory in GB
+            - percent: Memory usage percentage
+        Returns None if unable to read memory stats
+    """
+    try:
+        mem = psutil.virtual_memory()
+        return {
+            "total": round(mem.total / (1024 ** 3), 2),  # Convert bytes to GB
+            "used": round(mem.used / (1024 ** 3), 2),
+            "available": round(mem.available / (1024 ** 3), 2),
+            "percent": round(mem.percent, 1)
+        }
+    except Exception:
         return None

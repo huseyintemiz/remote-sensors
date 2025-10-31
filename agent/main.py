@@ -6,7 +6,7 @@ import platform
 import socket
 import httpx
 from config import SERVER_URL, COLLECTION_INTERVAL, MAX_RETRIES, RETRY_DELAY
-from sensors import get_cpu_temp, get_gpu_temp
+from sensors import get_cpu_temp, get_gpu_temp, get_memory_usage
 
 
 async def send_data_with_retry(data: dict, max_retries: int = MAX_RETRIES):
@@ -25,7 +25,9 @@ async def send_data_with_retry(data: dict, max_retries: int = MAX_RETRIES):
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.post(SERVER_URL, json=data)
                 response.raise_for_status()
-                print(f"✓ Sent data: CPU={data['cpu_temp']}°C, GPU={data['gpu_temp']}°C")
+                mem = data.get('memory_usage', {})
+                mem_str = f", Memory={mem.get('percent', 'N/A')}%" if mem else ""
+                print(f"✓ Sent data: CPU={data['cpu_temp']}°C, GPU={data['gpu_temp']}°C{mem_str}")
                 return True
         except httpx.HTTPError as e:
             print(f"✗ Send failed (attempt {attempt + 1}/{max_retries}): {e}")
@@ -52,6 +54,7 @@ async def collect_and_send():
         # Collect sensor data
         cpu_temp = get_cpu_temp()
         gpu_temp = get_gpu_temp()
+        memory_usage = get_memory_usage()
 
         data = {
             "hostname": hostname,
@@ -59,6 +62,7 @@ async def collect_and_send():
             "timestamp": time.time(),
             "cpu_temp": cpu_temp,
             "gpu_temp": gpu_temp,
+            "memory_usage": memory_usage,
         }
 
         # Send to server

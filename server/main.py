@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 from database import data_store
 
 app = FastAPI(title="Remote Sensor Monitor", version="1.0.0")
@@ -22,6 +22,7 @@ class SensorReading(BaseModel):
     timestamp: float
     cpu_temp: Optional[float] = None
     gpu_temp: Optional[float] = None
+    memory_usage: Optional[Dict[str, Any]] = None
 
 
 @app.post("/ingest")

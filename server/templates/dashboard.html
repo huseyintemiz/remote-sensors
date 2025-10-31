@@ -86,15 +86,21 @@
         }
 
         .sensors {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 1rem;
         }
 
         .sensor {
-            flex: 1;
             padding: 1rem;
             border-radius: 8px;
             text-align: center;
+        }
+
+        .memory-details {
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+            opacity: 0.85;
         }
 
         .sensor.cpu {
@@ -104,6 +110,11 @@
 
         .sensor.gpu {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .sensor.memory {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
         }
 
@@ -273,6 +284,22 @@
                                 <span class="unavailable">N/A</span>
                             {% endif %}
                         </div>
+                    </div>
+
+                    <div class="sensor memory">
+                        <div class="sensor-label">Memory</div>
+                        <div class="sensor-value">
+                            {% if data.memory_usage and data.memory_usage.percent %}
+                                {{ "%.1f"|format(data.memory_usage.percent) }}<span class="sensor-unit">%</span>
+                            {% else %}
+                                <span class="unavailable">N/A</span>
+                            {% endif %}
+                        </div>
+                        {% if data.memory_usage %}
+                        <div class="memory-details">
+                            {{ "%.1f"|format(data.memory_usage.used) }} / {{ "%.1f"|format(data.memory_usage.total) }} GB
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
 

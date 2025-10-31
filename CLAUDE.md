@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Remote PC sensor collection system that monitors CPU and GPU temperatures from multiple machines and displays them on a centralized web dashboard.
+Remote PC sensor collection system that monitors CPU/GPU temperatures and memory usage from multiple machines and displays them on a centralized web dashboard with interactive charts.
 
 **Architecture**: Two-part system
 - **Agent** (client): Runs on each monitored PC, collects sensor data every 60 seconds, sends to server via HTTP
 - **Server**: FastAPI application that receives sensor data and displays it in a real-time web dashboard
 
-**Technology Stack**: Python 3.x, FastAPI, psutil, pynvml (NVIDIA GPU support), httpx
+**Technology Stack**: Python 3.x, FastAPI, psutil, pynvml (NVIDIA GPU support), httpx, Chart.js
 
 ## Common Commands
 
@@ -47,10 +47,13 @@ python main.py
 
 ### Agent Structure
 - **[main.py](agent/main.py)**: Main event loop, collects and sends data with retry logic
-- **[sensors.py](agent/sensors.py)**: Platform-agnostic sensor reading (CPU via psutil, GPU via NVML)
+- **[sensors.py](agent/sensors.py)**: Platform-agnostic sensor reading:
+  - CPU temperature via psutil (coretemp, cpu_thermal, k10temp)
+  - GPU temperature via NVML (NVIDIA only)
+  - Memory usage via psutil (total, used, available, percent)
 - **[config.py](agent/config.py)**: Configuration (server URL, collection interval, retry settings)
 
-The agent handles multiple sensor platforms (coretemp, cpu_thermal, k10temp) and gracefully degrades when sensors are unavailable.
+The agent handles multiple sensor platforms and gracefully degrades when sensors are unavailable.
 
 ### Server Structure
 - **[main.py](server/main.py)**: FastAPI application with three main endpoints:
@@ -63,18 +66,21 @@ The agent handles multiple sensor platforms (coretemp, cpu_thermal, k10temp) and
 - **[static/charts.js](server/static/charts.js)**: Chart.js implementation for historical temperature graphs
 
 ### Data Flow
-1. Agent reads CPU/GPU temps using platform-specific APIs
-2. Data sent as JSON: `{hostname, os, timestamp, cpu_temp, gpu_temp}`
+1. Agent reads CPU/GPU temps and memory usage using platform-specific APIs
+2. Data sent as JSON: `{hostname, os, timestamp, cpu_temp, gpu_temp, memory_usage: {total, used, available, percent}}`
 3. Server stores in memory (current + historical readings)
 4. Dashboard displays real-time values and interactive time-series charts
 5. Charts auto-update every 5 seconds via `/api/history/{hostname}` endpoint
 
 ### Visualization Features
-- **Time-series charts**: Interactive line graphs using Chart.js showing CPU and GPU temperature trends
+- **Real-time cards**: Display current CPU temp, GPU temp, and memory usage percentage
+- **Time-series charts**: Interactive line graphs using Chart.js with dual Y-axes:
+  - Left axis: CPU and GPU temperatures (°C)
+  - Right axis: Memory usage (%)
 - **Time range selection**: View last 10min, 30min, or 1 hour of data
 - **Auto-refresh**: Charts update every 5 seconds without page reload
 - **Responsive design**: Charts adapt to screen size
-- **Tooltips**: Hover over data points for precise temperature readings
+- **Tooltips**: Hover over data points for precise readings
 
 ## Key Design Decisions
 

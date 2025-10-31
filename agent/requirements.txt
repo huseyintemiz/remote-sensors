@@ -1,0 +1,4 @@
+# Agent dependencies
+psutil>=5.9.0
+pynvml>=11.5.0
+httpx>=0.24.0

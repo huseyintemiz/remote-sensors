@@ -59,14 +59,22 @@ The agent handles multiple sensor platforms (coretemp, cpu_thermal, k10temp) and
   - `GET /api/current`: JSON API for current readings
   - `GET /api/history/{hostname}`: JSON API for historical data
 - **[database.py](server/database.py)**: In-memory data store with current + historical readings (max 100 per machine)
-- **[templates/dashboard.html](server/templates/dashboard.html)**: Auto-refreshing dashboard UI (5-second refresh)
-- **[static/charts.js](server/static/charts.js)**: Placeholder for future chart functionality
+- **[templates/dashboard.html](server/templates/dashboard.html)**: Real-time dashboard with Chart.js visualizations
+- **[static/charts.js](server/static/charts.js)**: Chart.js implementation for historical temperature graphs
 
 ### Data Flow
 1. Agent reads CPU/GPU temps using platform-specific APIs
 2. Data sent as JSON: `{hostname, os, timestamp, cpu_temp, gpu_temp}`
-3. Server stores in memory and serves via web UI
-4. Dashboard auto-refreshes every 5 seconds
+3. Server stores in memory (current + historical readings)
+4. Dashboard displays real-time values and interactive time-series charts
+5. Charts auto-update every 5 seconds via `/api/history/{hostname}` endpoint
+
+### Visualization Features
+- **Time-series charts**: Interactive line graphs using Chart.js showing CPU and GPU temperature trends
+- **Time range selection**: View last 10min, 30min, or 1 hour of data
+- **Auto-refresh**: Charts update every 5 seconds without page reload
+- **Responsive design**: Charts adapt to screen size
+- **Tooltips**: Hover over data points for precise temperature readings
 
 ## Key Design Decisions
 
@@ -88,7 +96,8 @@ When testing sensor reading on a development machine:
 ## Future Enhancements
 
 See [project_details.md](project_details.md) for potential additions:
-- SQLite persistence
-- Time-series charts (Chart.js/Plotly.js)
+- SQLite persistence for data across server restarts
 - Additional metrics (disk, memory, network)
 - TLS and authentication
+- Export historical data to CSV
+- Alert thresholds for high temperatures

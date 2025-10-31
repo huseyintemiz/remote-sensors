@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="5">
     <title>Remote Sensor Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -163,6 +163,58 @@
             opacity: 0.5;
             font-style: italic;
         }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .time-range-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .time-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .time-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .time-btn.active {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -172,10 +224,26 @@
                 <span class="status-indicator"></span>
                 Remote Sensor Dashboard
             </h1>
-            <p class="subtitle">Real-time temperature monitoring • Auto-refresh every 5 seconds</p>
+            <p class="subtitle">Real-time temperature monitoring with historical charts</p>
         </header>
 
         {% if machines %}
+        <!-- Historical Charts -->
+        {% for hostname, data in machines.items() %}
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">{{ hostname }} - Temperature History</div>
+                <div class="time-range-selector">
+                    <button class="time-btn active" onclick="updateChartRange('{{ hostname }}', 10)">10min</button>
+                    <button class="time-btn" onclick="updateChartRange('{{ hostname }}', 30)">30min</button>
+                    <button class="time-btn" onclick="updateChartRange('{{ hostname }}', 60)">1hr</button>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="chart-{{ hostname }}"></canvas>
+            </div>
+        </div>
+        {% endfor %}
         <div class="machines-grid">
             {% for hostname, data in machines.items() %}
             <div class="machine-card">
@@ -221,5 +289,22 @@
         </div>
         {% endif %}
     </div>
+
+    <script src="/static/charts.js"></script>
+    <script>
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const machines = {{ machines|tojson }};
+
+            for (const hostname in machines) {
+                initializeChart(hostname);
+            }
+
+            // Auto-refresh data every 5 seconds
+            setInterval(() => {
+                updateAllCharts();
+            }, 5000);
+        });
+    </script>
 </body>
 </html>
